@@ -1,15 +1,19 @@
 "use client";
 
 /**
- * App header: brand, global search, sync status, refresh, theme toggle.
+ * App header: brand, global search, sync status, refresh, theme toggle,
+ * account (sign in / user menu).
  */
 import { useEffect, useState } from "react";
-import { RefreshCw, Search, Sun, Moon, Tv, X, Settings } from "lucide-react";
+import Link from "next/link";
+import { RefreshCw, Search, Sun, Moon, Tv, X, Settings, UserRound, LogOut, CloudUpload, Check, Loader2, TriangleAlert } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useIPTV } from "@/store/iptv-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SettingsDialog } from "./settings-dialog";
+import { pushUserData, signOutEverywhere } from "./auth-sync";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -107,6 +111,9 @@ export function Header({ refreshing, onRefresh, searchRef }: HeaderProps) {
           <span className="truncate max-w-64">{total > 0 ? syncLabel : "loading playlist…"}</span>
         </div>
 
+        {/* Account */}
+        <AccountMenu />
+
         <Button
           size="icon"
           variant="ghost"
@@ -147,6 +154,94 @@ export function Header({ refreshing, onRefresh, searchRef }: HeaderProps) {
 
       <SettingsDialog />
     </header>
+  );
+}
+
+/* ---------------- Account ---------------- */
+
+function initialsOf(name: string, email: string): string {
+  const src = name.trim() || email;
+  const parts = src.split(/[\s._-]+/).filter(Boolean);
+  const ini = parts.slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "").join("");
+  return ini || "?";
+}
+
+function AccountMenu() {
+  const user = useIPTV((s) => s.authUser);
+  const syncStatus = useIPTV((s) => s.syncStatus);
+  const lastSyncedAt = useIPTV((s) => s.lastSyncedAt);
+
+  if (!user) {
+    return (
+      <Button asChild variant="outline" size="sm" className="h-9 shrink-0 rounded-full border-emerald-600/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-600/10 hover:border-emerald-600 font-medium">
+        <Link href="/login" aria-label="Sign in or create an account">
+          <UserRound className="w-4 h-4 sm:mr-1.5" />
+          <span className="hidden sm:inline">Sign in</span>
+        </Link>
+      </Button>
+    );
+  }
+
+  const backup = async () => {
+    const ok = await pushUserData();
+    toast({
+      title: ok ? "Backed up" : "Backup failed",
+      description: ok ? "Your favorites & playlists are saved to your account" : "Check your connection and try again",
+      variant: ok ? "default" : "destructive",
+    });
+  };
+
+  const signOut = async () => {
+    await signOutEverywhere();
+    toast({ title: "Signed out", description: "Your saved data stays safe in your account" });
+  };
+
+  const rel = lastSyncedAt
+    ? Date.now() - lastSyncedAt < 60_000
+      ? "just now"
+      : `${Math.round((Date.now() - lastSyncedAt) / 60000)} min ago`
+    : null;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          className="grid place-items-center w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-xs font-bold shadow-sm hover:brightness-110 transition shrink-0"
+          aria-label={`Account — ${user.name || user.email}`}
+        >
+          {initialsOf(user.name, user.email)}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-60">
+        <DropdownMenuLabel className="font-normal">
+          <p className="text-sm font-semibold truncate">{user.name || "Viewer"}</p>
+          <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">{user.email}</p>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <div className="px-2 py-1.5 flex items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+          {syncStatus === "syncing" ? (
+            <><Loader2 className="w-3 h-3 animate-spin text-emerald-500" /> backing up…</>
+          ) : syncStatus === "error" ? (
+            <><TriangleAlert className="w-3 h-3 text-amber-500" /> backup failed — will retry on change</>
+          ) : syncStatus === "saved" ? (
+            <><Check className="w-3 h-3 text-emerald-500" /> saved to account{rel ? ` · ${rel}` : ""}</>
+          ) : (
+            <><CloudUpload className="w-3 h-3" /> auto-backup on</>
+          )}
+        </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={backup} className="cursor-pointer">
+          <CloudUpload className="w-4 h-4" /> Back up now
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => useIPTV.getState().setSettingsOpen(true)} className="cursor-pointer">
+          <Settings className="w-4 h-4" /> Settings
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={signOut} className="cursor-pointer text-rose-500 focus:text-rose-500">
+          <LogOut className="w-4 h-4" /> Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

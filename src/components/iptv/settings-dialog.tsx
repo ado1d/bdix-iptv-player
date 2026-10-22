@@ -10,15 +10,18 @@
  * "Add playlist" chip) can open it.
  */
 import { useState } from "react";
+import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Check,
+  CloudUpload,
   Link2,
   Loader2,
   Pencil,
   Plus,
   RefreshCw,
   Rss,
+  ShieldCheck,
   Trash2,
   TriangleAlert,
   X,
@@ -26,6 +29,7 @@ import {
 import { useIPTV } from "@/store/iptv-store";
 import { customPlaylistQueryKey } from "./custom-sync";
 import { DeveloperCard } from "./developer-card";
+import { pushUserData, signOutEverywhere } from "./auth-sync";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,11 +55,81 @@ export function SettingsDialog() {
           </DialogDescription>
         </DialogHeader>
 
+        <AccountSection />
         <PlaylistManager />
         <PlaybackSettings />
         <AboutSection />
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* ---------------- Account ---------------- */
+
+function AccountSection() {
+  const user = useIPTV((s) => s.authUser);
+  const syncStatus = useIPTV((s) => s.syncStatus);
+  const lastSyncedAt = useIPTV((s) => s.lastSyncedAt);
+  const setOpen = useIPTV((s) => s.setSettingsOpen);
+
+  if (!user) {
+    return (
+      <div className="flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.05] px-3 py-2.5">
+        <span className="grid place-items-center w-9 h-9 rounded-lg bg-emerald-600/10 text-emerald-600 dark:text-emerald-400 shrink-0">
+          <ShieldCheck className="w-4.5 h-4.5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium">Save your stuff with a free account</p>
+          <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+            Favorites, playlists & settings backed up — safe even if your browser data is cleared.
+          </p>
+        </div>
+        <Button
+          asChild
+          size="sm"
+          className="h-8 bg-emerald-600 hover:bg-emerald-500 text-white shrink-0"
+          onClick={() => setOpen(false)}
+        >
+          <Link href="/login">Sign in</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const rel = lastSyncedAt
+    ? Date.now() - lastSyncedAt < 60_000
+      ? "just now"
+      : `${Math.round((Date.now() - lastSyncedAt) / 60000)} min ago`
+    : null;
+
+  const initials = (user.name.trim() || user.email)
+    .split(/[\s._-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("") || "?";
+
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 px-3 py-2.5">
+      <span className="grid place-items-center w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-xs font-bold shrink-0">
+        {initials}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium truncate">{user.name || "Viewer"}</p>
+        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+          {syncStatus === "saved" && rel ? `Backed up · ${rel}` : syncStatus === "syncing" ? "Backing up…" : syncStatus === "error" ? "Backup failed — will retry" : "Auto-backup on"}
+        </p>
+      </div>
+      <div className="flex items-center gap-1.5 shrink-0">
+        <Button size="sm" variant="outline" className="h-8" onClick={() => pushUserData()} disabled={syncStatus === "syncing"}>
+          {syncStatus === "syncing" ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <CloudUpload className="w-3.5 h-3.5 mr-1" />}
+          Back up
+        </Button>
+        <Button size="sm" variant="ghost" className="h-8 hover:text-rose-500" onClick={() => signOutEverywhere()}>
+          Sign out
+        </Button>
+      </div>
+    </div>
   );
 }
 

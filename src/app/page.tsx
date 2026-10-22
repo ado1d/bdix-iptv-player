@@ -15,6 +15,7 @@ import { Header } from "@/components/iptv/header";
 import { Sidebar, GroupChips } from "@/components/iptv/sidebar";
 import { PlayerPanel } from "@/components/iptv/player-panel";
 import { CustomPlaylistsSync } from "@/components/iptv/custom-sync";
+import { AuthSync } from "@/components/iptv/auth-sync";
 import { ChannelCard, ChannelCardSkeleton } from "@/components/iptv/channel-card";
 import { DeveloperBadge } from "@/components/iptv/developer-card";
 import { Button } from "@/components/ui/button";
@@ -244,6 +245,9 @@ export default function Home() {
 
       {/* Keeps every user-added playlist in sync (invisible) */}
       <CustomPlaylistsSync />
+
+      {/* Account session + cloud backup of favorites/playlists (invisible) */}
+      <AuthSync />
 
       <div className="mx-auto flex w-full max-w-[1700px] flex-1">
         <Sidebar channelsById={channelsById} />
