@@ -36,7 +36,7 @@ M3U_URL=https://raw.githubusercontent.com/abusaeeidx/Mrgify-BDIX-IPTV/main/playl
 
 ## Deployment (Vercel)
 
-The repo is Vercel-ready (`vercel --prod` or import via the dashboard). No database or extra services required. The stream proxy runs as an Edge Function.
+The repo is Vercel-ready (`vercel --prod` or import via the dashboard). The core player needs no database — the M3U playlist is fetched at runtime. Optional user accounts (sign in at `/login`) back up favorites, custom playlists and preferences to **Neon Postgres** from the project's Vercel Storage (`AUTH_DATABASE_URL`). The stream proxy runs as a Node Function.
 
 ## Developer
 

@@ -1,5 +1,6 @@
 /**
- * PostgreSQL pool (Render) + schema bootstrap for accounts & user-data sync.
+ * PostgreSQL pool (Neon Postgres via Vercel storage) + schema bootstrap for
+ * accounts & user-data sync.
  *
  * Tables:
  *  - users:      id, email (unique), name, password_hash, timestamps
@@ -12,15 +13,24 @@ import { Pool } from "pg";
 
 const globalForDb = globalThis as unknown as { pgPool?: Pool };
 
+// Managed Postgres providers (Neon, etc.) require TLS with provider-managed
+// certificate chains; only plain local dev runs without TLS.
+function tlsFor(url: string | undefined): { rejectUnauthorized: boolean } | undefined {
+  try {
+    const host = new URL(url ?? "").hostname;
+    if (host === "localhost" || host === "127.0.0.1" || host === "::1") return undefined;
+  } catch {
+    /* fall through to TLS */
+  }
+  return { rejectUnauthorized: false };
+}
+
 export const pool =
   globalForDb.pgPool ??
   new Pool({
     connectionString: process.env.AUTH_DATABASE_URL,
-    // Render's external PG endpoint requires TLS (self-signed cert chain)
-    ssl: process.env.AUTH_DATABASE_URL?.includes("render.com")
-      ? { rejectUnauthorized: false }
-      : undefined,
-    max: 3, // keep well under Render free-tier connection limits
+    ssl: tlsFor(process.env.AUTH_DATABASE_URL),
+    max: 3, // keep well under the provider's pooled-connection limits
     idleTimeoutMillis: 15_000,
     connectionTimeoutMillis: 12_000,
   });

@@ -54,6 +54,7 @@ server.log
 /skills/
 # local dev artifacts (not part of the app)
 /scripts/
+/tool-results/
 /worklog.md
 /db/
 /prisma/
