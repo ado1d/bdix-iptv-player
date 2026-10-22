@@ -16,6 +16,7 @@ import { Sidebar, GroupChips } from "@/components/iptv/sidebar";
 import { PlayerPanel } from "@/components/iptv/player-panel";
 import { CustomPlaylistsSync } from "@/components/iptv/custom-sync";
 import { ChannelCard, ChannelCardSkeleton } from "@/components/iptv/channel-card";
+import { DeveloperBadge } from "@/components/iptv/developer-card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -386,20 +387,23 @@ export default function Home() {
       </div>
 
       <footer className="mt-auto border-t border-zinc-200 dark:border-zinc-800">
-        <div className="mx-auto max-w-[1700px] px-4 sm:px-6 py-4 flex flex-col sm:flex-row gap-2 sm:items-center justify-between text-[11px] text-zinc-400 dark:text-zinc-500">
-          <p>
-            BDIX TV is a player, not a broadcaster — all streams come from the{" "}
-            <a
-              href="https://github.com/abusaeeidx/Mrgify-BDIX-IPTV"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-emerald-500"
-            >
-              Mrgify BDIX IPTV
-            </a>{" "}
-            playlist and belong to their respective owners.
-          </p>
-          <p className="shrink-0">Statuses are auto-checked from our servers · some BDIX-only streams may still work on local connections</p>
+        <div className="mx-auto max-w-[1700px] px-4 sm:px-6 py-4 flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
+          <div className="flex flex-col gap-1 text-[11px] text-zinc-400 dark:text-zinc-500 min-w-0">
+            <p>
+              BDIX TV is a player, not a broadcaster — all streams come from the{" "}
+              <a
+                href="https://github.com/abusaeeidx/Mrgify-BDIX-IPTV"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-emerald-500"
+              >
+                Mrgify BDIX IPTV
+              </a>{" "}
+              playlist and belong to their respective owners.
+            </p>
+            <p className="shrink-0">Statuses are auto-checked from our servers · some BDIX-only streams may still work on local connections</p>
+          </div>
+          <DeveloperBadge />
         </div>
       </footer>
     </div>

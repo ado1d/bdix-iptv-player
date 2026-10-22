@@ -38,6 +38,15 @@ M3U_URL=https://raw.githubusercontent.com/abusaeeidx/Mrgify-BDIX-IPTV/main/playl
 
 The repo is Vercel-ready (`vercel --prod` or import via the dashboard). No database or extra services required. The stream proxy runs as an Edge Function.
 
+## Developer
+
+**Ayman Chowdhury** — [aymann.is-a.dev](https://aymann.is-a.dev)
+
+<p>
+  <img src="https://res.cloudinary.com/ne2uunmx/image/upload/v1791478541/portfolio/whtrhrg0fdrd8qedfgso.jpg" alt="Ayman Chowdhury" width="96" align="left" style="border-radius:9999px;margin-right:12px" />
+  Built BDIX TV — a fast, ad-free player for live Bangladeshi television.
+</p>
+
 ## Disclaimer
 
 This project is a player/UI only. It hosts no content — all streams come from the public Mrgify BDIX IPTV playlist and belong to their respective owners.

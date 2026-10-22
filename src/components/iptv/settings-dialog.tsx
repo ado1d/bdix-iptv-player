@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useIPTV } from "@/store/iptv-store";
 import { customPlaylistQueryKey } from "./custom-sync";
+import { DeveloperCard } from "./developer-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,6 +53,7 @@ export function SettingsDialog() {
 
         <PlaylistManager />
         <PlaybackSettings />
+        <AboutSection />
       </DialogContent>
     </Dialog>
   );
@@ -311,6 +313,21 @@ function AddPlaylistForm() {
         <Plus className="w-4 h-4 mr-1.5" /> Add playlist
       </Button>
     </form>
+  );
+}
+
+/* ---------------- About ---------------- */
+
+function AboutSection() {
+  return (
+    <div className="flex flex-col gap-2.5 pt-2 border-t border-zinc-200 dark:border-zinc-800 mt-2">
+      <p className="text-sm font-semibold">About</p>
+      <DeveloperCard />
+      <p className="text-[11px] leading-relaxed text-zinc-400 dark:text-zinc-500">
+        BDIX TV — a fast, ad-free player for live Bangladeshi television. Built
+        with love, kept in sync with the Mrgify BDIX playlist every day.
+      </p>
+    </div>
   );
 }
 
