@@ -1,15 +1,17 @@
 /**
  * GET /api/proxy?url=<stream-url>
- * CORS / mixed-content stream proxy on the Edge runtime:
+ * CORS / mixed-content stream proxy:
  *  - .m3u8 playlists are rewritten so every nested URL also flows through the proxy
  *  - binary segments are streamed through untouched
  *  - Range headers are forwarded (seek support)
- * This is what makes non-CORS and plain-http BDIX streams playable in the browser.
+ * Runs on the Node.js runtime (Vercel's Edge runtime blocks direct-IP URLs,
+ * which many BDIX streams use).
  */
 import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36 BDIX-TV-Player/1.0";
