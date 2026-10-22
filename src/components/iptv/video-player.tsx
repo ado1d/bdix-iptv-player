@@ -142,6 +142,7 @@ export function VideoPlayer({ channel, onPrev, onNext, onClose }: PlayerProps) {
     setShowControls(true);
 
     const onPlaying = () => {
+      setPhase("playing");
       setBuffering(false);
       setPaused(false);
       if (video.videoWidth === 0) setAudioOnly(true);
@@ -206,8 +207,10 @@ export function VideoPlayer({ channel, onPrev, onNext, onClose }: PlayerProps) {
               video.muted = false;
               video.volume = volume;
               video.play().catch(() => {
+                // Autoplay policy blocked unmuted playback — resume muted + prompt
                 video.muted = true;
                 setNeedsUnmute(true);
+                video.play().catch(() => setPaused(true));
               });
             } else {
               setNeedsUnmute(true);
@@ -261,6 +264,11 @@ export function VideoPlayer({ channel, onPrev, onNext, onClose }: PlayerProps) {
           if (muted === false && volume > 0) {
             video.muted = false;
             video.volume = volume;
+            video.play().catch(() => {
+              video.muted = true;
+              setNeedsUnmute(true);
+              video.play().catch(() => setPaused(true));
+            });
           } else {
             setNeedsUnmute(true);
           }
