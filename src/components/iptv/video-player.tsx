@@ -35,6 +35,7 @@ import {
   Signal,
   Settings2,
   Check,
+  X,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -511,6 +512,14 @@ export function VideoPlayer({ channel, onPrev, onNext, onClose }: PlayerProps) {
             <p className="truncate text-sm font-medium text-white/95">{channel.name}</p>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={onClose}
+              className="pointer-events-auto p-1.5 -mr-0.5 rounded-full hover:bg-white/20 text-white/90 hover:text-white transition-colors"
+              aria-label="Close player"
+              title="Close player"
+            >
+              <X className="w-5 h-5" />
+            </button>
             <span
               className={cn(
                 "rounded px-1.5 py-0.5 text-[10px] font-semibold tracking-wide",

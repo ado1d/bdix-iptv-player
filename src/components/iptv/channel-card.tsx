@@ -5,7 +5,7 @@
  * status checker so visible channels get their status first.
  */
 import { useEffect, useRef } from "react";
-import { Heart } from "lucide-react";
+import { Heart, Link2 } from "lucide-react";
 import type { Channel } from "@/lib/m3u";
 import { useIPTV } from "@/store/iptv-store";
 import { statusChecker } from "@/lib/checker";
@@ -80,6 +80,14 @@ export function ChannelCard({ channel, index }: ChannelCardProps) {
           <span className="truncate">{channel.group}</span>
           <span className="text-zinc-300 dark:text-zinc-700">·</span>
           <span className="shrink-0">#{index + 1}</span>
+          {channel.sourceId && (
+            <span
+              className="shrink-0 inline-flex items-center gap-0.5 text-violet-500 dark:text-violet-400"
+              title={`From your playlist: ${channel.sourceName ?? "custom"}`}
+            >
+              <Link2 className="w-3 h-3" />
+            </span>
+          )}
         </span>
       </span>
 

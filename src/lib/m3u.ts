@@ -11,6 +11,10 @@ export interface Channel {
   logo: string;
   tvgId: string;
   url: string;
+  /** Which playlist this channel came from ("" = built-in default playlist) */
+  sourceId?: string;
+  /** Display name of the source playlist (custom playlists only) */
+  sourceName?: string;
 }
 
 export interface GroupInfo {
@@ -26,6 +30,14 @@ export interface PlaylistData {
   fetchedAt: string;
   sourceUrl: string;
   groups: GroupInfo[];
+  channels: Channel[];
+}
+
+/** Response shape of /api/playlist/custom */
+export interface CustomPlaylistData {
+  total: number;
+  updatedAt: string | null;
+  fetchedAt: string;
   channels: Channel[];
 }
 

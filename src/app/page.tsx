@@ -14,6 +14,7 @@ import { statusChecker } from "@/lib/checker";
 import { Header } from "@/components/iptv/header";
 import { Sidebar, GroupChips } from "@/components/iptv/sidebar";
 import { PlayerPanel } from "@/components/iptv/player-panel";
+import { CustomPlaylistsSync } from "@/components/iptv/custom-sync";
 import { ChannelCard, ChannelCardSkeleton } from "@/components/iptv/channel-card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -30,13 +31,14 @@ export default function Home() {
   }, []);
 
   const channels = useIPTV((s) => s.channels);
-  const setPlaylist = useIPTV((s) => s.setPlaylist);
+  const setDefaultPlaylist = useIPTV((s) => s.setDefaultPlaylist);
   const search = useIPTV((s) => s.search);
   const group = useIPTV((s) => s.group);
   const statusFilter = useIPTV((s) => s.statusFilter);
   const specialView = useIPTV((s) => s.specialView);
   const currentId = useIPTV((s) => s.currentId);
   const play = useIPTV((s) => s.play);
+  const stop = useIPTV((s) => s.stop);
   const setStatus = useIPTV((s) => s.setStatus);
 
   // ---------------- Playlist (auto-synced) ----------------
@@ -59,23 +61,26 @@ export default function Home() {
   useEffect(() => {
     if (playlistQuery.data) {
       const d = playlistQuery.data;
-      setPlaylist(d.channels, d.groups, d.updatedAt, d.fetchedAt);
+      setDefaultPlaylist(d.channels, d.updatedAt, d.fetchedAt);
     }
-  }, [playlistQuery.data, setPlaylist]);
+  }, [playlistQuery.data, setDefaultPlaylist]);
 
   const hardRefresh = useCallback(async () => {
     try {
       const res = await fetch("/api/playlist?refresh=1");
       if (!res.ok) throw new Error("refresh failed");
       const d: PlaylistData = await res.json();
-      setPlaylist(d.channels, d.groups, d.updatedAt, d.fetchedAt);
+      setDefaultPlaylist(d.channels, d.updatedAt, d.fetchedAt);
       queryClient.setQueryData(["playlist"], d);
       statusChecker.clear();
       statusChecker.checkBackground(d.channels.map((c) => c.url));
     } catch {
       // handled by query error state below
+    } finally {
+      // also refresh every user-added playlist
+      queryClient.invalidateQueries({ queryKey: ["custom-playlist"] });
     }
-  }, [queryClient, setPlaylist]);
+  }, [queryClient, setDefaultPlaylist]);
 
   // ---------------- Status checker wiring ----------------
   useEffect(() => {
@@ -125,6 +130,8 @@ export default function Home() {
       const rec = useIPTV.getState().recents;
       const map = new Map(channels.map((c) => [c.id, c]));
       list = rec.map((id) => map.get(id)).filter((c): c is NonNullable<typeof c> => Boolean(c));
+    } else if (specialView === "custom") {
+      list = list.filter((c) => c.sourceId);
     }
 
     if (group && specialView === "all") {
@@ -188,6 +195,11 @@ export default function Home() {
       if (e.key === "/") {
         e.preventDefault();
         searchRef.current?.focus();
+      } else if (e.key === "Escape" && currentId) {
+        // Close the player unless a dialog is open or we're just leaving fullscreen
+        if (!document.querySelector("[role=\"dialog\"]") && !document.fullscreenElement) {
+          stop();
+        }
       } else if (e.key === "ArrowRight" && currentId) {
         switchChannel(1);
       } else if (e.key === "ArrowLeft" && currentId) {
@@ -212,7 +224,7 @@ export default function Home() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [currentId, switchChannel]);
+  }, [currentId, switchChannel, stop]);
 
   const surprise = useCallback(() => {
     const online = channels.filter((c) => statuses[c.url]?.status === "online");
@@ -228,6 +240,9 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
       <Header refreshing={playlistQuery.isFetching && !loading} onRefresh={hardRefresh} searchRef={searchRef} />
+
+      {/* Keeps every user-added playlist in sync (invisible) */}
+      <CustomPlaylistsSync />
 
       <div className="mx-auto flex w-full max-w-[1700px] flex-1">
         <Sidebar channelsById={channelsById} />
@@ -266,7 +281,8 @@ export default function Home() {
                       {loading ? "Loading channels…" : `${channels.length} live channels, ready to play`}
                     </h1>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-                      Channel list auto-syncs with the Mrgify BDIX playlist every day. Pick a channel —{" "}
+                      Channel list auto-syncs with the Mrgify BDIX playlist every day — and you can add
+                      your own M3U playlists from Settings. Pick a channel —{" "}
                       <span className="hidden sm:inline">zap with ← / → — </span>
                       or let fate decide.
                     </p>
@@ -337,6 +353,7 @@ export default function Home() {
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
                 {specialView === "favorites" && "No favorites yet — tap the heart on any channel."
                   || specialView === "recents" && "Nothing watched yet."
+                  || specialView === "custom" && "No channels from your own playlists yet — add an M3U link in Settings."
                   || statusFilter === "online" && "No channels confirmed working yet — the check is still running."
                   || statusFilter === "offline" && "No dead channels found (yet)."
                   || "No channels match your search."}

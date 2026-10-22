@@ -5,7 +5,7 @@
  * of channels from the same group.
  */
 import { useMemo } from "react";
-import { ChevronLeft, ChevronRight, Heart, X, Copy, ExternalLink, Radio } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart, X, Copy, ExternalLink, Radio, Link2 } from "lucide-react";
 import type { Channel } from "@/lib/m3u";
 import { useIPTV } from "@/store/iptv-store";
 import { VideoPlayer } from "./video-player";
@@ -68,6 +68,15 @@ export function PlayerPanel({ channel, visibleChannels, onPrev, onNext }: Player
                 {channel.name}
               </h2>
               <StatusBadge status={status} />
+              {channel.sourceName && (
+                <span
+                  className="inline-flex items-center gap-1 rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-600 dark:text-violet-400 max-w-40"
+                  title={`From your playlist: ${channel.sourceName}`}
+                >
+                  <Link2 className="w-3 h-3 shrink-0" />
+                  <span className="truncate">{channel.sourceName}</span>
+                </span>
+              )}
               {isRadio && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-zinc-300 dark:border-zinc-700 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
                   <Radio className="w-3 h-3" /> Radio
@@ -118,9 +127,10 @@ export function PlayerPanel({ channel, visibleChannels, onPrev, onNext }: Player
             <Button
               size="icon"
               variant="ghost"
-              className="h-9 w-9 max-sm:hidden"
+              className="h-9 w-9"
               onClick={stop}
               aria-label="Close player"
+              title="Close player"
             >
               <X className="w-4 h-4" />
             </Button>

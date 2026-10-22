@@ -4,11 +4,12 @@
  * App header: brand, global search, sync status, refresh, theme toggle.
  */
 import { useEffect, useState } from "react";
-import { RefreshCw, Search, Sun, Moon, Tv, X } from "lucide-react";
+import { RefreshCw, Search, Sun, Moon, Tv, X, Settings } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useIPTV } from "@/store/iptv-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SettingsDialog } from "./settings-dialog";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -110,6 +111,17 @@ export function Header({ refreshing, onRefresh, searchRef }: HeaderProps) {
           size="icon"
           variant="ghost"
           className="h-9 w-9 shrink-0"
+          onClick={() => useIPTV.getState().setSettingsOpen(true)}
+          aria-label="Settings — manage playlists"
+          title="Settings — add your own playlists"
+        >
+          <Settings className="w-4 h-4" />
+        </Button>
+
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-9 w-9 shrink-0"
           onClick={onRefresh}
           disabled={refreshing}
           aria-label="Refresh playlist"
@@ -132,6 +144,8 @@ export function Header({ refreshing, onRefresh, searchRef }: HeaderProps) {
           <Moon className="w-4 h-4 dark:hidden" />
         </Button>
       </div>
+
+      <SettingsDialog />
     </header>
   );
 }

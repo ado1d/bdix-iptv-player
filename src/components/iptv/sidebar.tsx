@@ -3,7 +3,7 @@
 /**
  * Category sidebar (desktop) + horizontal chips (mobile).
  */
-import { LayoutGrid, Heart, History } from "lucide-react";
+import { LayoutGrid, Heart, History, Link2, Plus } from "lucide-react";
 import { useIPTV } from "@/store/iptv-store";
 import { cn } from "@/lib/utils";
 import type { Channel } from "@/lib/m3u";
@@ -21,6 +21,8 @@ export function Sidebar({ channelsById }: SidebarProps) {
   const setSpecialView = useIPTV((s) => s.setSpecialView);
   const favorites = useIPTV((s) => s.favorites);
   const recents = useIPTV((s) => s.recents);
+  const customCount = useIPTV((s) => s.channels.reduce((n, c) => (c.sourceId ? n + 1 : n), 0));
+  const setSettingsOpen = useIPTV((s) => s.setSettingsOpen);
 
   const favCount = favorites.filter((id) => channelsById.has(id)).length;
   const recentCount = recents.filter((id) => channelsById.has(id)).length;
@@ -66,6 +68,21 @@ export function Sidebar({ channelsById }: SidebarProps) {
           </span>
           <Count>{recentCount}</Count>
         </button>
+        <button
+          className={itemClass(specialView === "custom")}
+          onClick={() => setSpecialView("custom")}
+        >
+          <span className="flex items-center gap-2.5 min-w-0">
+            <Link2 className="w-4 h-4 shrink-0" /> My playlists
+          </span>
+          <Count>{customCount}</Count>
+        </button>
+        <button
+          className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/70 border border-dashed border-zinc-200 dark:border-zinc-800 hover:border-emerald-500/40 transition-colors"
+          onClick={() => setSettingsOpen(true)}
+        >
+          <Plus className="w-4 h-4 shrink-0" /> Add playlist
+        </button>
       </div>
 
       <p className="px-3 pt-5 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
@@ -107,6 +124,8 @@ export function GroupChips() {
   const setSpecialView = useIPTV((s) => s.setSpecialView);
   const favorites = useIPTV((s) => s.favorites);
   const recents = useIPTV((s) => s.recents);
+  const customCount = useIPTV((s) => s.channels.reduce((n, c) => (c.sourceId ? n + 1 : n), 0));
+  const setSettingsOpen = useIPTV((s) => s.setSettingsOpen);
 
   const chip = (active: boolean) =>
     cn(
@@ -127,6 +146,15 @@ export function GroupChips() {
       {specialView === "recents" ? null : null}
       <button className={chip(specialView === "recents")} onClick={() => setSpecialView("recents")}>
         ⏱ Recent ({recents.length})
+      </button>
+      <button className={chip(specialView === "custom")} onClick={() => setSpecialView("custom")}>
+        <span className="inline-flex items-center gap-1">⊕ My lists ({customCount})</span>
+      </button>
+      <button
+        className="shrink-0 rounded-full border border-dashed border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-500 hover:border-emerald-500/50 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+        onClick={() => setSettingsOpen(true)}
+      >
+        + Add playlist
       </button>
       <span className="w-px bg-zinc-200 dark:bg-zinc-800 shrink-0 my-1" />
       {groups.map((g) => (
