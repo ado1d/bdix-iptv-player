@@ -31,8 +31,13 @@ export interface CustomPlaylist {
   /** Stable id derived from the URL (re-adding the same URL is a no-op) */
   id: string;
   name: string;
+  /** For kind="url": the M3U URL. For kind="file": empty string — content lives on the server keyed by fileId */
   url: string;
   addedAt: number;
+  /** "url" (link-based) or "file" (uploaded) — defaults to "url" for back-compat */
+  kind?: "url" | "file";
+  /** For kind="file": the id of the row in user_files. Always paired with kind="file" */
+  fileId?: string;
 }
 
 /** Runtime sync status of a custom playlist (shown in Settings) */
@@ -103,6 +108,7 @@ interface IPTVState {
   setCustomChannels: (playlistId: string, channels: Channel[]) => void;
   setCustomStatus: (playlistId: string, status: Partial<CustomPlaylistStatus> & { count?: number }) => void;
   addCustomPlaylist: (url: string, name?: string) => { ok: boolean; id?: string; error?: string; duplicate?: boolean };
+  addFilePlaylist: (fileId: string, name: string, channelCount: number) => { ok: boolean; id?: string; error?: string; duplicate?: boolean };
   removeCustomPlaylist: (id: string) => void;
   renameCustomPlaylist: (id: string, name: string) => void;
   setSearch: (s: string) => void;
@@ -242,7 +248,7 @@ export const useIPTV = create<IPTVState>()(
             return { ok: false, duplicate: true, id, error: "This playlist is already added" };
           }
           const finalName = (name || "").trim().slice(0, 60) || nameFromUrl(trimmed);
-          set({ customPlaylists: [...st.customPlaylists, { id, name: finalName, url: trimmed, addedAt: Date.now() }] });
+          set({ customPlaylists: [...st.customPlaylists, { id, name: finalName, url: trimmed, addedAt: Date.now(), kind: "url" }] });
           set((s) => ({
             customStatus: {
               ...s.customStatus,
@@ -252,12 +258,58 @@ export const useIPTV = create<IPTVState>()(
           return { ok: true, id };
         },
 
+        /**
+         * Add a file-based playlist. The file content has already been
+         * uploaded to the server (POST /api/playlist/upload) under the
+         * signed-in user; we only keep the local metadata + initial
+         * channel count for instant feedback. Channels are pulled from
+         * /api/playlist/upload?id=<fileId> at runtime by CustomPlaylistSync.
+         */
+        addFilePlaylist: (fileId, name, channelCount) => {
+          const cleanName = (name || "").trim().slice(0, 60) || "My uploaded playlist";
+          // Local id is prefixed so it never collides with url-derived ids
+          const id = `file_${fileId}`;
+          const st = get();
+          if (st.customPlaylists.some((p) => p.id === id)) {
+            return { ok: false, duplicate: true, id, error: "This file is already added" };
+          }
+          set({
+            customPlaylists: [
+              ...st.customPlaylists,
+              { id, name: cleanName, url: "", addedAt: Date.now(), kind: "file", fileId },
+            ],
+          });
+          set((s) => ({
+            customStatus: {
+              ...s.customStatus,
+              [id]: { loading: false, error: null, count: channelCount, fetchedAt: null, updatedAt: null },
+            },
+          }));
+          return { ok: true, id };
+        },
+
         removeCustomPlaylist: (id) => {
-          set((st) => {
-            const { [id]: _removed, ...restChannels } = st.customChannels;
-            const { [id]: _removedStatus, ...restStatus } = st.customStatus;
+          const st = get();
+          const playlist = st.customPlaylists.find((p) => p.id === id);
+          // For file-based playlists, also delete the server-side content.
+          // Fire-and-forget — the row in user_files is also cleaned up via
+          // the user_data playlists JSONB sync (the playlist metadata will
+          // be removed on next PUT), but this keeps stale files from
+          // lingering if the user re-adds or never pushes again.
+          if (playlist?.kind === "file" && playlist.fileId) {
+            fetch(`/api/playlist/upload?id=${encodeURIComponent(playlist.fileId)}`, {
+              method: "DELETE",
+              keepalive: true,
+            }).catch(() => {
+              /* best-effort — server-side row is also removed via cascade
+                 when the playlist is dropped from user_data.playlists */
+            });
+          }
+          set((s) => {
+            const { [id]: _removed, ...restChannels } = s.customChannels;
+            const { [id]: _removedStatus, ...restStatus } = s.customStatus;
             return {
-              customPlaylists: st.customPlaylists.filter((p) => p.id !== id),
+              customPlaylists: s.customPlaylists.filter((p) => p.id !== id),
               customChannels: restChannels,
               customStatus: restStatus,
             };
